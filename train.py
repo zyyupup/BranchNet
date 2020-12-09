@@ -138,8 +138,7 @@ def train(epoch):
             loss_cl+= sum([CL(out[i],out[j]) for j in range(i+1,len(out))])
         if epoch >= args.stop_epoch:
             loss_st = soft_loss(out[0],targets,nn.Softmax(dim=1)(out[-1]))
-            loss_kd = _make_st_criterion(out[0],nn.Softmax(dim=1)(out[-1]),targets)
-        loss = torch.sum(torch.stack(loss_sl,dim=0)) + loss_cl + loss_st + loss_kd
+        loss = torch.sum(torch.stack(loss_sl,dim=0)) + loss_cl + loss_st
         loss.backward()
         optimizer.step()
         
