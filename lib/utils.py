@@ -21,7 +21,7 @@ from functools import partial
 import torch.nn as nn
 class soft_target_loss(nn.Module):
     def __init__(self, num_classes):
-        super(soft_cross_entropy, self).__init__()
+        super(soft_target_loss, self).__init__()
         self.num_classes = num_classes
         self.softmax = nn.LogSoftmax(dim=1)
         
