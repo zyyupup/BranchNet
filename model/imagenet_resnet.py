@@ -156,13 +156,6 @@ class ResNet(nn.Module):
         ))#conv3
         branch.append(nn.Linear(outplanes,self.num_classes))#fc
         return nn.ModuleList(branch)
-    def branchOutput(self,branch_id,x_,x_1):
-        i = branch_id
-        x_ = self.branch[i][2](x_) + self.branch[i][1](self.branch[i][0](x_1))
-        x_ = self.branch[i][3](x_)
-        x_ = x_.view(x_.size(0), -1)
-        x_ = self.branch[i][4](x_)
-        return x_
     def forward(self, x):
         x = self.conv1(x)
         x = self.bn1(x)
@@ -170,44 +163,39 @@ class ResNet(nn.Module):
         x = self.maxpool(x)
         branch_x=[]
         out = []
-        x = self.layer1(x)
-        pre_x = x
-        x = self.layer2(x)
-        out.append(self.branchOutput(0,pre_x,x))#branch unit 1
-        pre_x = x
-        x = self.layer3(x)
-        out.append(self.branchOutput(1,pre_x,x))#branch unit 2
-        pre_x = x
-        x = self.layer4(x)
-        out.append(self.branchOutput(2,pre_x,x))#branch unit 3
-        
+        x = self.layer1(x)#56*56
+        branch_x.append(x)
+        x = self.layer2(x)#28*28
+        branch_x.append(x)
+        x = self.layer3(x)#14*14
+        branch_x.append(x)
+        x = self.layer4(x)#7*7
+        branch_x.append(x)
+
+        for i,x_ in enumerate(branch_x[:-1]):
+            x_ = self.branch[i][2](x_) + self.branch[i][1](self.branch[i][0](branch_x[i + 1]))
+            x_ = self.branch[i][3](x_)
+            x_ = x_.view(x_.size(0), -1)
+            x_ = self.branch[i][4](x_)
+            out.append(x_)
         x = self.avgpool(x)
         x = x.view(x.size(0), -1)
         x = self.fc(x)
         out.append(x)
         return out
 
-
 def resnet18(pretrained=False, **kwargs):
     model = ResNet(BasicBlock, [2, 2, 2, 2],**kwargs)
     return model
-
-
 def resnet34(pretrained=False, **kwargs):
     model = ResNet(BasicBlock, [3, 4, 6, 3], **kwargs)
     return model
-
-
 def resnet50(pretrained=False, **kwargs):
     model = ResNet(Bottleneck, [3, 4, 6, 3], **kwargs)
     return model
-
-
 def resnet101(pretrained=False , **kwargs):
     model = ResNet(Bottleneck, [3, 4, 23, 3],**kwargs)
     return model
-
-
 def resnet152(pretrained=False, **kwargs):
     model = ResNet(Bottleneck, [3, 8, 36, 3], **kwargs)
     return model
