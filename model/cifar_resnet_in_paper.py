@@ -86,7 +86,7 @@ class BasicBlock(nn.Module):
 
 class ResNet(nn.Module):
 
-    def __init__(self, block, layers, num_classes=1000,scale_factor = 1.0):
+    def __init__(self, block, layers, num_classes=100,scale_factor = 1.0):
         self.inplanes = 16
         self.scale_factor = scale_factor
         self.num_classes = num_classes
@@ -162,26 +162,26 @@ class ResNet(nn.Module):
         ))#conv
         branch.append(nn.Linear(outplanes,self.num_classes))#fc
         return nn.ModuleList(branch)
-    def BUnit(self,branch_id,x_,x_1):#branch unit
-        i = branch_id
-        x_ = self.branch[i][2](x_) + self.branch[i][1](self.branch[i][0](x_1))
-        x_ = self.branch[i][3](x_)
-        x_ = x_.view(x_.size(0), -1)
-        x_ = self.branch[i][4](x_)
-        return x_
     def forward(self, x):
         x = self.conv1(x)
         x = self.bn1(x)
         x = self.relu(x)
+        # x = self.maxpool(x)
         branch_x = []
         out = []
-        x = self.layer1(x)
-        pre_x = x
-        x = self.layer2(x)
-        out.append(self.BUnit(0,pre_x,x)) # branch unit 1
-        pre_x = x
-        x = self.layer3(x)
-        out.append(self.BUnit(1,pre_x,x))# branch unit 2
+        x = self.layer1(x)  # 32*32
+        branch_x.append(x)
+        x = self.layer2(x)  # 16*16
+        branch_x.append(x)
+        x = self.layer3(x)  # 8*8
+        branch_x.append(x)
+
+        for i, x_ in enumerate(branch_x[:-1]):
+            x_ = self.branch[i][2](x_)+self.branch[i][1](self.branch[i][0](branch_x[i + 1]))
+            x_ = self.branch[i][3](x_)
+            x_ = x_.view(x_.size(0), -1)
+            x_ = self.branch[i][4](x_)
+            out.append(x_)
         x = self.avgpool(x)
         x = x.view(x.size(0),-1)
         x = self.fc(x)
