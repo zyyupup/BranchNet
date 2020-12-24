@@ -29,7 +29,7 @@ class soft_target_loss(nn.Module):
         hard_loss = F.cross_entropy(inputs,target)
         target = F.one_hot(target,num_classes=self.num_classes).float()
         log_probs = self.softmax(inputs)
-        target = target+target_pre.detach()
+        target = target+target_pre
         soft_loss = (-target* log_probs).sum()/target.size(0)
         loss = alpha * soft_loss + (1. - alpha) * hard_loss
         return loss
